@@ -948,7 +948,7 @@ function renderBrandFilters() {
   brandFiltersEl.innerHTML = ['전체', ...BRAND_STAGES].map(s => `
     <button class="filter-btn ${brandActiveFilter === s ? 'active' : ''}" data-filter="${s}">${s} ${counts[s] ? `(${counts[s]})` : ''}</button>
   `).join('') + `
-    <button class="payment-filter-btn ${brandPaymentFilterOnly ? 'active' : ''}" id="paymentFilterBtn">💰 정산확인 필요만 ${paymentCount ? `(${paymentCount})` : ''}</button>
+    <button class="payment-filter-btn ${brandPaymentFilterOnly ? 'active' : ''}" id="paymentFilterBtn">💰 정산확인 필요 ${paymentCount ? `(${paymentCount})` : ''}</button>
   `;
 
   brandFiltersEl.querySelectorAll('.filter-btn').forEach(btn => {
