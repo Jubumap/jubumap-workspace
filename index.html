@@ -120,24 +120,6 @@
 
   .quick-add button:hover { background: var(--moss-dark); }
 
-  .mic-btn {
-    font-size: 18px;
-    padding: 0 16px;
-    border-radius: 7px;
-    border: 1px solid var(--divider);
-    background: var(--paper-raised);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background .15s ease, border-color .15s ease;
-  }
-  .mic-btn:hover { background: var(--paper); }
-  .mic-btn.recording {
-    background: var(--brick-tint);
-    border-color: var(--brick);
-    animation: pulse 1s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
-
   .util-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px; }
   .util-btn {
     font-family: var(--font-body);
@@ -506,6 +488,11 @@
   <section id="app-brand" class="app-section active">
     <p class="section-sub">협상 단계, 단가, 2차활용 조건, 정산 주기, 재협상 시점을 한눈에</p>
 
+    <div class="util-row">
+      <button class="util-btn" id="copyBrandBtn">📋 전체 복사</button>
+      <a class="util-btn" href="https://app.notion.com/p/3b315fb212f5809ba258cf021ba6a325?pvs=204" target="_blank" rel="noopener">📔 노션에서 열기</a>
+    </div>
+
     <div class="toolbar">
       <div class="filters" id="brandFilters"></div>
       <button class="add-btn" id="openBrandAddBtn">+ 새 브랜드 추가</button>
@@ -522,10 +509,9 @@
 
     <div class="quick-add">
       <input type="text" id="quickInput" placeholder="지금 떠오른 아이디어를 한 줄로 적어보세요…">
-      <button id="micBtn" class="mic-btn" title="음성으로 입력">🎤</button>
       <button id="quickAddBtn">담기</button>
     </div>
-    <p class="quick-hint">일단 제목만 적어도 담겨요. 마이크 버튼을 누르고 말하면 받아쓰기 돼요. 소스・템플릿・후킹 문구는 나중에 카드 눌러서 채워도 돼요.</p>
+    <p class="quick-hint">일단 제목만 적어도 담겨요. 소스・템플릿・후킹 문구는 나중에 카드 눌러서 채워도 돼요.</p>
 
     <div class="util-row">
       <button class="util-btn" id="copyIdeasBtn">📋 전체 복사</button>
@@ -544,6 +530,11 @@
   <!-- ===== 콘텐츠 캘린더 섹션 ===== -->
   <section id="app-calendar" class="app-section">
     <p class="section-sub">촬영・업로드 일정을 달력으로 보고, 날짜를 눌러 일정을 추가해요</p>
+
+    <div class="util-row">
+      <button class="util-btn" id="copyCalBtn">📋 전체 복사</button>
+      <a class="util-btn" href="https://app.notion.com/p/2d9adf98b2be445296c0d4012d39c5b9?pvs=204" target="_blank" rel="noopener">📔 노션에서 열기</a>
+    </div>
 
     <div class="cal-nav">
       <div>
@@ -1033,6 +1024,32 @@ async function deleteBrandDeal(id) {
 }
 
 document.getElementById('openBrandAddBtn').addEventListener('click', () => openBrandModal(null));
+
+document.getElementById('copyBrandBtn').addEventListener('click', async () => {
+  if (brandDeals.length === 0) {
+    alert('아직 복사할 브랜드가 없어요.');
+    return;
+  }
+  const text = brandDeals.map(d => {
+    let line = `• ${d.brand} [${d.stage}]`;
+    if (d.rate) line += ` · 단가: ${d.rate}`;
+    if (d.secondaryUsage) line += `\n  2차활용: ${d.secondaryUsage}`;
+    if (d.settlementCycle) line += `\n  정산주기: ${d.settlementCycle}`;
+    if (d.renegoDate) line += `\n  재협상예정일: ${d.renegoDate}`;
+    if (d.memo) line += `\n  메모: ${d.memo}`;
+    return line;
+  }).join('\n\n');
+
+  const btn = document.getElementById('copyBrandBtn');
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '복사됐어요 ✓';
+  } catch (e) {
+    btn.textContent = '복사 실패, 다시 시도';
+  }
+  setTimeout(() => { btn.textContent = original; }, 1800);
+});
 document.getElementById('brandResetBtn').addEventListener('click', async () => {
   if (!confirm('등록된 모든 브랜드 정보를 삭제할까요? 되돌릴 수 없어요.')) return;
   brandDeals = [];
@@ -1156,43 +1173,6 @@ async function quickAddIdea() {
 
 document.getElementById('quickAddBtn').addEventListener('click', quickAddIdea);
 document.getElementById('quickInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddIdea(); });
-
-/* 음성 입력 (지원 브라우저에서만 동작) */
-const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognizing = false;
-let recognizer = null;
-const micBtn = document.getElementById('micBtn');
-
-micBtn.addEventListener('click', () => {
-  if (!SpeechRecognitionImpl) {
-    alert('이 브라우저에서는 음성 입력이 지원되지 않아요. 대신 키보드의 마이크 아이콘으로 받아쓰기 해보세요.');
-    return;
-  }
-  if (recognizing) {
-    recognizer.stop();
-    return;
-  }
-  recognizer = new SpeechRecognitionImpl();
-  recognizer.lang = 'ko-KR';
-  recognizer.interimResults = false;
-  recognizer.maxAlternatives = 1;
-
-  recognizer.onresult = (e) => {
-    const text = e.results[0][0].transcript;
-    const input = document.getElementById('quickInput');
-    input.value = (input.value ? input.value.trim() + ' ' : '') + text;
-  };
-  recognizer.onend = () => { recognizing = false; micBtn.classList.remove('recording'); };
-  recognizer.onerror = () => { recognizing = false; micBtn.classList.remove('recording'); };
-
-  try {
-    recognizer.start();
-    recognizing = true;
-    micBtn.classList.add('recording');
-  } catch (e) {
-    alert('음성 입력을 시작할 수 없었어요. 다시 시도해주세요.');
-  }
-});
 
 /* 전체 복사 (노션 등에 붙여넣기용) */
 document.getElementById('copyIdeasBtn').addEventListener('click', async () => {
@@ -1524,6 +1504,30 @@ document.getElementById('calResetBtn').addEventListener('click', async () => {
   calItems = [];
   await saveCalItems();
   renderCalendar();
+});
+
+document.getElementById('copyCalBtn').addEventListener('click', async () => {
+  if (calItems.length === 0) {
+    alert('아직 복사할 일정이 없어요.');
+    return;
+  }
+  const sorted = [...calItems].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const text = sorted.map(it => {
+    let line = `• ${it.date} — ${it.title} [${it.type} / ${it.stage}]`;
+    if (it.brand) line += `\n  브랜드: ${it.brand}`;
+    if (it.memo) line += `\n  메모: ${it.memo}`;
+    return line;
+  }).join('\n\n');
+
+  const btn = document.getElementById('copyCalBtn');
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '복사됐어요 ✓';
+  } catch (e) {
+    btn.textContent = '복사 실패, 다시 시도';
+  }
+  setTimeout(() => { btn.textContent = original; }, 1800);
 });
 
 /* ---------- 초기 로드 ---------- */
