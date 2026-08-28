@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>주부지도 워크스페이스</title>
+<title>워크스페이스</title>
 <meta name="theme-color" content="#5C6B4F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="주부지도">
+<meta name="apple-mobile-web-app-title" content="워크스페이스">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -169,7 +169,47 @@
   }
   .util-btn:hover { background: var(--paper); color: var(--ink); }
 
-  .quick-hint { font-size: 12.5px; color: var(--muted); margin: 0 0 24px 2px; }
+  .quick-hint { font-size: 12.5px; color: var(--muted); margin: 0 0 16px 2px; }
+
+  .bulk-add { margin: 0 0 20px; }
+  .bulk-add summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration: underline;
+    list-style: none;
+  }
+  .bulk-add summary::-webkit-details-marker { display: none; }
+  .bulk-add[open] summary { margin-bottom: 10px; }
+  .bulk-add textarea {
+    width: 100%;
+    min-height: 100px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--divider);
+    border-radius: 7px;
+    background: var(--paper-raised);
+    color: var(--ink);
+    resize: vertical;
+    margin-bottom: 8px;
+  }
+  .bulk-add textarea:focus { outline: 2px solid var(--moss); outline-offset: 1px; border-color: var(--moss); }
+
+  .idea-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .idea-table th, .idea-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--divider); }
+  .idea-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  .idea-table td.pin-col { width: 20px; color: var(--moss); }
+  .idea-table tbody tr { cursor: pointer; }
+  .idea-table tbody tr:hover { background: var(--paper); }
+  .idea-table .mini-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
 
   .toolbar {
     display: flex;
@@ -507,7 +547,7 @@
 
 <div class="wrap">
   <header class="masthead">
-    <h1>주부지도 워크스페이스</h1>
+    <h1>워크스페이스</h1>
     <p>브랜드 협업, 아이디어, 일정, 브랜드 가이드를 한 곳에서 관리해요</p>
   </header>
 
@@ -549,6 +589,12 @@
     </div>
     <p class="quick-hint">일단 제목만 적어도 담겨요. 소스・템플릿・후킹 문구는 나중에 카드 눌러서 채워도 돼요.</p>
 
+    <details class="bulk-add">
+      <summary>여러 개 한번에 추가하기 (한 줄에 하나씩)</summary>
+      <textarea id="bulkInput" placeholder="한 줄에 아이디어 하나씩 적어주세요&#10;예)&#10;냉장고 고무패킹 곰팡이 제거법&#10;수건 삶지 않고 냄새 없애는 법"></textarea>
+      <button id="bulkAddBtn" class="util-btn">📥 전체 담기</button>
+    </details>
+
     <div class="util-row">
       <button class="util-btn" id="copyIdeasBtn">📋 전체 복사</button>
       <a class="util-btn" href="https://app.notion.com/p/0e2da0f4885d42a9a27b105dfbf75e53?pvs=204" target="_blank" rel="noopener">📔 노션에서 열기</a>
@@ -556,6 +602,7 @@
 
     <div class="toolbar">
       <div class="filters" id="ideaFilters"></div>
+      <div class="filters" id="ideaViewToggle"></div>
     </div>
 
     <div id="ideaListArea"><div class="loading-msg">불러오는 중…</div></div>
@@ -591,53 +638,19 @@
   <section id="app-guide" class="app-section">
     <p class="section-sub">주부지도가 누구인지, 타겟은 누구인지, 어떤 가치를 주는지 한눈에</p>
 
+    <div class="util-row">
+      <button class="util-btn" id="editGuideBtn">✏️ 내용 수정</button>
+    </div>
+
     <div class="source-links">
       <a href="https://app.notion.com/p/3b215fb212f580018199c04c431ea0ae?pvs=204" target="_blank" rel="noopener">노션 원본 · 브랜드 한눈에 보기 ↗</a>
       <a href="https://app.notion.com/p/3b515fb212f580939bd9cbb67ad077e4?pvs=204" target="_blank" rel="noopener">노션 원본 · 제안서(미디어킷) ↗</a>
       <a href="https://app.notion.com/p/3c815fb212f5800b8b76d993897b1bff?pvs=204" target="_blank" rel="noopener">노션 원본 · 오리지널 코드 지침서 ↗</a>
     </div>
 
-    <div class="glance-grid">
-      <div class="glance-card">
-        <div class="glance-label">오리지널 코드</div>
-        <p class="glance-quote">"직접 겪은 시행착오를 생활의 지혜로 바꿔, 다른 사람이 덜 고생하도록 돕는 사람"</p>
-        <ul>
-          <li>내가 먼저 겪는다</li>
-          <li>직접 해본다</li>
-          <li>검증한다</li>
-          <li>다른 사람이 같은 시행착오를 하지 않도록 챙겨준다</li>
-        </ul>
-      </div>
-      <div class="glance-card">
-        <div class="glance-label">주부지도는 누구인가</div>
-        <p class="glance-quote">"도장깨기를 하듯 집과 살림을 하나씩 살려가며, 생활 속에서 모르고 지나가기 쉬운 한 끗 차이를 알려주는 사람"</p>
-        <ul>
-          <li>청소를 알려주는 사람이 아니라, 생활을 더 편하게 운영하는 <strong>기준</strong>을 알려주는 사람</li>
-          <li>팔로워 2,576명 · 누적 게시물 148개 (저장·공유 중심 확산이 강점)</li>
-        </ul>
-      </div>
-      <div class="glance-card">
-        <div class="glance-label">핵심 타깃</div>
-        <p class="glance-quote">"아이 키우며 살림하고 있지만, 제대로 배운 적은 없어 집을 어떻게 관리하고 바꿔야 할지 막막한 30~40대 엄마"</p>
-        <ul>
-          <li>집 전체를 뜯어고치거나 계속 새것을 사기보다, 지금 가진 것을 잘 활용해 깔끔하고 편한 집을 만들고 싶은 사람</li>
-          <li>모르고 버리거나, 잘못 사거나, 불필요하게 돈 쓰는 게 아까운 사람</li>
-          <li>작은 한 끗으로 살림을 더 잘하고 싶은 사람</li>
-        </ul>
-      </div>
-      <div class="glance-card">
-        <div class="glance-label">전달하는 가치</div>
-        <p class="glance-quote">"생활 속 모르고 지나가면 아까운 한 끗 차이로, 이미 가진 것을 더 오래, 더 가치 있게 쓰도록 돕는 것"</p>
-        <ul>
-          <li>새는 돈을 줄이고</li>
-          <li>시간을 아끼고</li>
-          <li>체력을 덜 쓰고</li>
-          <li>나중에 덜 고생하게 됩니다</li>
-        </ul>
-      </div>
-    </div>
+    <div class="glance-grid" id="guideGlanceArea"></div>
 
-    <div class="message-banner">"집이 마음에 들지 않아도 괜찮아요. 하나씩 바꾸면 됩니다."</div>
+    <div id="guideBannerArea"></div>
 
     <details class="doc-accordion">
       <summary>📋 제안서 (미디어킷) 전체보기</summary>
@@ -1147,8 +1160,20 @@ const IDEA_TEMPLATES = ['미정', 'A: 후킹형', 'B: 문제해결형'];
 let ideaList = [];
 let ideaActiveFilter = '전체';
 let ideaEditingId = null;
+let ideaViewMode = 'card';
 const ideaListArea = document.getElementById('ideaListArea');
 const ideaFiltersEl = document.getElementById('ideaFilters');
+const ideaViewToggleEl = document.getElementById('ideaViewToggle');
+
+function renderIdeaViewToggle() {
+  ideaViewToggleEl.innerHTML = `
+    <button class="filter-btn ${ideaViewMode === 'card' ? 'active' : ''}" data-view="card">카드형</button>
+    <button class="filter-btn ${ideaViewMode === 'table' ? 'active' : ''}" data-view="table">표형</button>
+  `;
+  ideaViewToggleEl.querySelectorAll('[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => { ideaViewMode = btn.dataset.view; renderIdeaListEl(); renderIdeaViewToggle(); });
+  });
+}
 
 async function loadIdeaList() {
   try {
@@ -1193,10 +1218,36 @@ function renderIdeaListEl() {
     return (b.createdAt || 0) - (a.createdAt || 0);
   });
 
-  ideaListArea.innerHTML = `<div class="card-list">${sorted.map(ideaCardHtml).join('')}</div>`;
+  ideaListArea.innerHTML = ideaViewMode === 'table' ? ideaTableHtml(sorted) : `<div class="card-list">${sorted.map(ideaCardHtml).join('')}</div>`;
   ideaListArea.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openIdeaModal(btn.dataset.edit)));
   ideaListArea.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteIdea(btn.dataset.delete)));
-  ideaListArea.querySelectorAll('[data-pin]').forEach(btn => btn.addEventListener('click', () => toggleIdeaPin(btn.dataset.pin)));
+  ideaListArea.querySelectorAll('[data-pin]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); toggleIdeaPin(btn.dataset.pin); }));
+  ideaListArea.querySelectorAll('[data-row-edit]').forEach(row => row.addEventListener('click', () => openIdeaModal(row.dataset.rowEdit)));
+}
+
+function ideaTableHtml(list) {
+  return `
+    <table class="idea-table">
+      <thead>
+        <tr><th></th><th>제목</th><th>상태</th><th>소스</th><th>템플릿</th></tr>
+      </thead>
+      <tbody>
+        ${list.map(i => {
+          const stageStyle = IDEA_STAGE_STYLE[i.stage] || IDEA_STAGE_STYLE['아이디어'];
+          const sourceStyle = i.source ? IDEA_SOURCE_STYLE[i.source] : null;
+          return `
+            <tr data-row-edit="${i.id}">
+              <td class="pin-col">${i.pinned ? '★' : ''}</td>
+              <td>${escapeHtml(i.title)}</td>
+              <td><span class="mini-tag" style="background:${stageStyle.bg}; color:${stageStyle.text};">${escapeHtml(i.stage)}</span></td>
+              <td>${sourceStyle ? `<span class="mini-tag" style="background:${sourceStyle.bg}; color:${sourceStyle.text};">${escapeHtml(i.source)}</span>` : '-'}</td>
+              <td>${i.template && i.template !== '미정' ? escapeHtml(i.template) : '-'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function ideaCardHtml(i) {
@@ -1225,7 +1276,7 @@ function ideaCardHtml(i) {
   `;
 }
 
-function renderIdeas() { renderIdeaFilters(); renderIdeaListEl(); }
+function renderIdeas() { renderIdeaFilters(); renderIdeaViewToggle(); renderIdeaListEl(); }
 
 async function quickAddIdea() {
   const input = document.getElementById('quickInput');
@@ -1240,6 +1291,21 @@ async function quickAddIdea() {
 
 document.getElementById('quickAddBtn').addEventListener('click', quickAddIdea);
 document.getElementById('quickInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') quickAddIdea(); });
+
+document.getElementById('bulkAddBtn').addEventListener('click', async () => {
+  const textarea = document.getElementById('bulkInput');
+  const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length === 0) { textarea.focus(); return; }
+
+  lines.forEach(title => {
+    ideaList.push({ id: uid(), title, stage: '아이디어', source: '', template: '미정', hook: '', memo: '', pinned: false, createdAt: Date.now() });
+  });
+
+  textarea.value = '';
+  ideaViewMode = 'table';
+  await saveIdeaList();
+  renderIdeas();
+});
 
 /* 전체 복사 (노션 등에 붙여넣기용) */
 document.getElementById('copyIdeasBtn').addEventListener('click', async () => {
@@ -1598,9 +1664,98 @@ document.getElementById('copyCalBtn').addEventListener('click', async () => {
 });
 
 /* ---------- 초기 로드 ---------- */
+/* =========================================================
+   브랜드 가이드 (한눈에 보기 카드 + 메시지 배너, 사용자 수정 가능)
+   ========================================================= */
+const GUIDE_DEFAULT = {
+  cards: [
+    { label: '오리지널 코드', quote: '"직접 겪은 시행착오를 생활의 지혜로 바꿔, 다른 사람이 덜 고생하도록 돕는 사람"', bullets: ['내가 먼저 겪는다', '직접 해본다', '검증한다', '다른 사람이 같은 시행착오를 하지 않도록 챙겨준다'] },
+    { label: '주부지도는 누구인가', quote: '"도장깨기를 하듯 집과 살림을 하나씩 살려가며, 생활 속에서 모르고 지나가기 쉬운 한 끗 차이를 알려주는 사람"', bullets: ['청소를 알려주는 사람이 아니라, 생활을 더 편하게 운영하는 기준을 알려주는 사람', '팔로워 2,576명 · 누적 게시물 148개 (저장·공유 중심 확산이 강점)'] },
+    { label: '핵심 타깃', quote: '"아이 키우며 살림하고 있지만, 제대로 배운 적은 없어 집을 어떻게 관리하고 바꿔야 할지 막막한 30~40대 엄마"', bullets: ['집 전체를 뜯어고치거나 계속 새것을 사기보다, 지금 가진 것을 잘 활용해 깔끔하고 편한 집을 만들고 싶은 사람', '모르고 버리거나, 잘못 사거나, 불필요하게 돈 쓰는 게 아까운 사람', '작은 한 끗으로 살림을 더 잘하고 싶은 사람'] },
+    { label: '전달하는 가치', quote: '"생활 속 모르고 지나가면 아까운 한 끗 차이로, 이미 가진 것을 더 오래, 더 가치 있게 쓰도록 돕는 것"', bullets: ['새는 돈을 줄이고', '시간을 아끼고', '체력을 덜 쓰고', '나중에 덜 고생하게 됩니다'] },
+  ],
+  banner: '"집이 마음에 들지 않아도 괜찮아요. 하나씩 바꾸면 됩니다."'
+};
+
+let guideData = null;
+
+async function loadGuideData() {
+  try {
+    const res = await storage.get('brand-guide-content');
+    if (res && res.value) {
+      guideData = JSON.parse(res.value);
+    } else {
+      guideData = JSON.parse(JSON.stringify(GUIDE_DEFAULT));
+      await saveGuideData();
+    }
+  } catch (e) {
+    guideData = JSON.parse(JSON.stringify(GUIDE_DEFAULT));
+  }
+  renderGuide();
+}
+
+async function saveGuideData() {
+  try {
+    await storage.set('brand-guide-content', JSON.stringify(guideData));
+  } catch (e) { console.error('저장 중 오류', e); }
+}
+
+function renderGuide() {
+  document.getElementById('guideGlanceArea').innerHTML = guideData.cards.map(c => `
+    <div class="glance-card">
+      <div class="glance-label">${escapeHtml(c.label)}</div>
+      <p class="glance-quote">${escapeHtml(c.quote)}</p>
+      <ul>${c.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+  document.getElementById('guideBannerArea').innerHTML = `<div class="message-banner">${escapeHtml(guideData.banner)}</div>`;
+}
+
+document.getElementById('editGuideBtn').addEventListener('click', () => {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:560px;">
+      <h2>브랜드 가이드 수정</h2>
+      ${guideData.cards.map((c, idx) => `
+        <div class="form-row">
+          <label>${escapeHtml(c.label)} — 한 줄 문장</label>
+          <input type="text" class="gf-quote" data-idx="${idx}" value="${escapeHtml(c.quote)}">
+        </div>
+        <div class="form-row">
+          <label>${escapeHtml(c.label)} — 세부 항목 (한 줄에 하나씩)</label>
+          <textarea class="gf-bullets" data-idx="${idx}">${escapeHtml(c.bullets.join('\n'))}</textarea>
+        </div>
+      `).join('')}
+      <div class="form-row">
+        <label>브랜드 메시지 배너</label>
+        <input type="text" id="gf-banner" value="${escapeHtml(guideData.banner)}">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="guideCancelBtn">취소</button>
+        <button class="btn-primary" id="guideSaveBtn">저장</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#guideCancelBtn').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#guideSaveBtn').addEventListener('click', async () => {
+    overlay.querySelectorAll('.gf-quote').forEach(inp => { guideData.cards[inp.dataset.idx].quote = inp.value.trim(); });
+    overlay.querySelectorAll('.gf-bullets').forEach(ta => {
+      guideData.cards[ta.dataset.idx].bullets = ta.value.split('\n').map(s => s.trim()).filter(Boolean);
+    });
+    guideData.banner = overlay.querySelector('#gf-banner').value.trim();
+    await saveGuideData();
+    renderGuide();
+    overlay.remove();
+  });
+});
+
 loadBrandDeals();
 loadIdeaList();
 loadCalItems();
+loadGuideData();
 </script>
 
 </body>
