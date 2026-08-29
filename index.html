@@ -196,7 +196,8 @@
   }
   .bulk-add textarea:focus { outline: 2px solid var(--moss); outline-offset: 1px; border-color: var(--moss); }
 
-  .idea-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .idea-table-wrap { overflow-x: auto; }
+  .idea-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13.5px; }
   .idea-table th, .idea-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--divider); }
   .idea-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
   .idea-table td.pin-col { width: 20px; color: var(--moss); }
@@ -1175,11 +1176,79 @@ function renderIdeaViewToggle() {
   });
 }
 
+const CONTENT_PLAN_SEED = [
+  { title: '5천원에 득템한 아이 옷, 버릴 뻔했어요', priority: '🔥', stage: '작업중', statusNote: '기획중 / 자료나눔', contentAxis: '살리기 + 손실방어', reduction: '덜 버린다', pinned: true, memo: 'B급 세일 옷 → 집에서 뜯김 발견 → 꿰매도 티 남 → 와펜으로 살리기 → 아이옷 저렴하게 사는 시기/방법 자료 나눔' },
+  { title: '신축 3년·준신축 2년·구축 3년 살아보니', priority: '🔥', stage: '아이디어', statusNote: '⭐ 대표 브랜딩 릴스', contentAxis: '세계관 핵심', reduction: '', pinned: true, memo: '세 집 모두 살아보니 완벽한 집은 없었음 → 좋은 집을 기다리기보다 지금 불편한 것부터 하나씩 바꾸기 시작 → 도장깨기 세계관' },
+  { title: '아이 머리핀, 정리함부터 사지 마세요', priority: '🔥', stage: '작업중', statusNote: '기획중', contentAxis: '살리기 + 생활비효율', reduction: '덜 산다', pinned: true, memo: '머리핀 늘어남 → 수납제품 검색했지만 마음에 안 듦 → 옷걸이·스카프·쪽쪽이홀더 등 집에 있는 것으로 동선 맞춤 해결' },
+  { title: '주방 줄눈, 업체 부르기 애매해서 직접 살려봤어요', priority: '🔥', stage: '아이디어', statusNote: '기획예정 / 쿠팡파트너스', contentAxis: '살리기 + 도장깨기', reduction: '돈이 덜 샌다', pinned: true, memo: '흐린눈하던 낡은 줄눈 → 전체 시공 대신 필요한 부분 직접 보수 → B/A' },
+  { title: '이거 원래 안 지워지는 건 줄 알았어요', priority: '🔥', stage: '아이디어', statusNote: '제품제공 / 리뷰의무X', contentAxis: '도장깨기 + 제품검증', reduction: '덜 닦는다', pinned: true, memo: '그릇건조대에 쌓인 물때 → 평소 방법으론 안 지워짐 → 물때제거제로 직접 제거 → B/A' },
+  { title: '아이 반팔티, 여름 끝났다고 넣지 마세요', priority: '🔥', stage: '아이디어', statusNote: '소재', contentAxis: '살리기 + 절약', reduction: '덜 산다', pinned: true, memo: '여름 외출복을 가을·겨울 이너로 활용 → 한 철 옷을 4계절 가까이 활용' },
+  { title: '이거 모르면 식재료 계속 버려요', priority: '🔥', stage: '아이디어', statusNote: '세부 식재료 선정 필요', contentAxis: '손실방어', reduction: '덜 버린다', pinned: true, memo: '반복해서 상하거나 버리는 식재료 → 보관 방식 변경 → 폐기 감소' },
+  { title: '주방 후드필터, 찌든 뒤 닦지 마세요', priority: '🔥', stage: '아이디어', statusNote: '소재', contentAxis: '손실방어', reduction: '덜 닦는다', pinned: true, memo: '기름때 쌓인 뒤 대청소하지 않고 평소 짧은 관리로 큰 노동 방지' },
+  { title: '화장실 실리콘, 닦기만 하면 곰팡이 다시 와요', priority: '🔥', stage: '아이디어', statusNote: '소재', contentAxis: '손실방어 + 도장깨기', reduction: '덜 신경 쓴다', pinned: true, memo: '계속 닦는데 반복되는 곰팡이 → 실리콘/원인 확인 → 필요한 부분 보수' },
+  { title: '냉장고 도장깨기', priority: '🔥', stage: '아이디어', statusNote: '도장깨기 시리즈', contentAxis: '생활비효율 + 손실방어', reduction: '덜 산다', pinned: true, memo: '안 보여서 잊음 → 또 삼 → 결국 버림 → 보이는 구조로 재정리' },
+  { title: '옷장 도장깨기', priority: '🟢', stage: '아이디어', statusNote: '시리즈', contentAxis: '생활비효율 + 도장깨기', reduction: '덜 찾는다', pinned: false, memo: '치워도 다시 흐트러지는 옷장 → 생활동선에 맞춰 구조 자체 변경' },
+  { title: '화장실 문, 열어둘까 닫아둘까?', priority: '🟢', stage: '아이디어', statusNote: '정보 검증 필요', contentAxis: '손실방어', reduction: '덜 신경 쓴다', pinned: false, memo: '샤워 후 무심코 하는 습관 → 습기·곰팡이 관리 기준 정리' },
+  { title: '5살 아이 키우는 집, 이렇게 세팅해봤어요', priority: '🟢', stage: '아이디어', statusNote: '육아+살림', contentAxis: '생활비효율', reduction: '덜 신경 쓴다', pinned: false, memo: '교구·책·놀잇감을 아이가 스스로 꺼내고 정리하기 쉬운 구조로 변경' },
+  { title: '왜 이것만 맨날 없어질까?', priority: '🟢', stage: '아이디어', statusNote: '소재', contentAxis: '생활비효율', reduction: '덜 찾는다', pinned: false, memo: '계속 찾게 되는 물건 → 사용하는 장소/동선에 맞춰 자리 지정' },
+  { title: '전단지 버리기 전에 이렇게 써보세요', priority: '🟢', stage: '아이디어', statusNote: '있는 것 활용', contentAxis: '살리기', reduction: '덜 산다', pinned: false, memo: '버리는 전단지 → 작은 상자로 만들어 자잘한 물건 정리' },
+  { title: '쿠팡봉지 그냥 버리기 전에', priority: '🟢', stage: '아이디어', statusNote: '활용처 구체화 필요', contentAxis: '살리기', reduction: '덜 버린다', pinned: false, memo: '포장재를 생활 속 다른 용도로 재활용' },
+  { title: '집 변화 과정 — 도장깨기 시리즈', priority: '🟢', stage: '아이디어', statusNote: '지속 제작', contentAxis: '세계관 연재', reduction: '', pinned: false, memo: '공간 하나 선택 → 비포 → 바꾸는 과정 → 애프터 → 실제 생활에서 달라진 점' },
+  { title: '도장깨기 하고 진짜 달라진 것들', priority: '🟢', stage: '아이디어', statusNote: '중간 결산용', contentAxis: '세계관', reduction: '', pinned: false, memo: '그동안 바꾼 공간 B/A → 미관보다 시간·체력·스트레스가 어떻게 줄었는지 보여주기' },
+  { title: '도장깨기 반응 모음 + 다음 도장 예고', priority: '🟢', stage: '아이디어', statusNote: '시즌/중간 결산', contentAxis: '세계관', reduction: '', pinned: false, memo: '실제 팔로워 반응 + 변화 장면 → 다음 공간 티저' },
+  { title: '집안일 매일 다 하려고 하지 마세요', priority: '🟡', stage: '아이디어', statusNote: '루틴 각도', contentAxis: '생활비효율', reduction: '덜 신경 쓴다', pinned: false, memo: '보이는 집안일을 계속 처리 → 끝이 없음 → 요일/구역별로 분리 → 오늘 할 것만 하기' },
+  { title: '멀티크리너 하나로 집 어디까지 닦일까?', priority: '🟡', stage: '아이디어', statusNote: '내돈내산', contentAxis: '제품검증', reduction: '덜 산다', pinned: false, memo: '집 여러 공간에 직접 사용 → 실제로 세제 여러 개를 줄일 수 있는지 검증' },
+  { title: 'N천원짜리 하나로 우리집에서 없어진 불편', priority: '🟡', stage: '아이디어', statusNote: '제품 확정 후', contentAxis: '제품검증', reduction: '', pinned: false, memo: '저렴한 아이템 소개가 아니라 반복되던 불편을 실제 얼마나 줄였는지' },
+  { title: '구축에 살아보니 의외로 좋았던 N가지', priority: '🟡', stage: '아이디어', statusNote: '2번 이후 파생', contentAxis: '경험 + 세계관', reduction: '', pinned: false, memo: '구축 찬양이 아니라 직접 살아보며 알게 된 예상 밖의 장점' },
+  { title: '신축·구축 다 살아보니 진짜 달랐던 것 3가지', priority: '🟡', stage: '아이디어', statusNote: '2번 이후 파생', contentAxis: '경험 + 세계관', reduction: '', pinned: false, memo: '스펙 비교보다 실제 생활에서 체감한 차이와 내가 중요하게 보게 된 기준' },
+  { title: '이거 모르면 겨울 관리비 더 나가요', priority: '❄️', stage: '보류', statusNote: '난방 시즌 대기', contentAxis: '손실방어', reduction: '돈이 덜 샌다', pinned: false, memo: '겨울철 무심코 하는 습관 → 난방 효율 저하 → 바로 바꿀 수 있는 관리 기준' },
+];
+
+async function importContentPlanOnce() {
+  try {
+    const flag = await storage.get('content-plan-v1-imported');
+    if (flag && flag.value) return;
+  } catch (e) {}
+  const existingTitles = new Set(ideaList.map(i => i.title));
+  CONTENT_PLAN_SEED.forEach(item => {
+    if (!existingTitles.has(item.title)) {
+      ideaList.push({
+        id: uid(), title: item.title, stage: item.stage, source: '', template: '미정',
+        hook: '', memo: item.memo, reduction: item.reduction, priority: item.priority,
+        contentAxis: item.contentAxis, statusNote: item.statusNote, pinned: item.pinned, createdAt: Date.now(),
+      });
+    }
+  });
+  await saveIdeaList();
+  await storage.set('content-plan-v1-imported', 'true');
+}
+
+async function migrateContentPlanV2() {
+  try {
+    const flag = await storage.get('content-plan-v2-imported');
+    if (flag && flag.value) return;
+  } catch (e) {}
+  let changed = false;
+  CONTENT_PLAN_SEED.forEach(item => {
+    const existing = ideaList.find(i => i.title === item.title);
+    if (existing) {
+      if (!existing.priority) { existing.priority = item.priority; changed = true; }
+      if (!existing.contentAxis) { existing.contentAxis = item.contentAxis; changed = true; }
+      if (!existing.statusNote) { existing.statusNote = item.statusNote; changed = true; }
+      if (existing.memo && existing.memo.includes('(콘텐츠축:')) { existing.memo = item.memo; changed = true; }
+    }
+  });
+  if (changed) await saveIdeaList();
+  await storage.set('content-plan-v2-imported', 'true');
+}
+
 async function loadIdeaList() {
   try {
     const res = await storage.get('content-ideas');
     ideaList = res && res.value ? JSON.parse(res.value) : [];
   } catch (e) { ideaList = []; }
+  await importContentPlanOnce();
+  await migrateContentPlanV2();
   renderIdeas();
 }
 
@@ -1227,26 +1296,31 @@ function renderIdeaListEl() {
 
 function ideaTableHtml(list) {
   return `
+    <div class="idea-table-wrap">
     <table class="idea-table">
       <thead>
-        <tr><th></th><th>제목</th><th>상태</th><th>소스</th><th>템플릿</th></tr>
+        <tr>
+          <th></th><th>우선순위</th><th>콘텐츠 주제 / 가제</th><th>핵심기획</th><th>콘텐츠 축</th><th>상태/비고</th><th>오리지널코드 반영 (덜~)</th><th></th>
+        </tr>
       </thead>
       <tbody>
         ${list.map(i => {
-          const stageStyle = IDEA_STAGE_STYLE[i.stage] || IDEA_STAGE_STYLE['아이디어'];
-          const sourceStyle = i.source ? IDEA_SOURCE_STYLE[i.source] : null;
           return `
-            <tr data-row-edit="${i.id}">
-              <td class="pin-col">${i.pinned ? '★' : ''}</td>
-              <td>${escapeHtml(i.title)}</td>
-              <td><span class="mini-tag" style="background:${stageStyle.bg}; color:${stageStyle.text};">${escapeHtml(i.stage)}</span></td>
-              <td>${sourceStyle ? `<span class="mini-tag" style="background:${sourceStyle.bg}; color:${sourceStyle.text};">${escapeHtml(i.source)}</span>` : '-'}</td>
-              <td>${i.template && i.template !== '미정' ? escapeHtml(i.template) : '-'}</td>
+            <tr>
+              <td class="pin-col" data-row-edit="${i.id}" style="cursor:pointer;">${i.pinned ? '★' : ''}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer;">${i.priority ? escapeHtml(i.priority) : '-'}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer; font-family:var(--font-display);">${escapeHtml(i.title)}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer; max-width:260px;">${i.memo ? escapeHtml(i.memo) : '-'}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer;">${i.contentAxis ? escapeHtml(i.contentAxis) : '-'}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer;">${i.statusNote ? escapeHtml(i.statusNote) : '-'}</td>
+              <td data-row-edit="${i.id}" style="cursor:pointer;">${i.reduction ? `<span class="mini-tag" style="background:var(--moss-tint); color:var(--moss-dark);">${escapeHtml(i.reduction)}</span>` : '<span style="color:var(--divider);">-</span>'}</td>
+              <td><button class="icon-btn danger" data-delete="${i.id}">삭제</button></td>
             </tr>
           `;
         }).join('')}
       </tbody>
     </table>
+    </div>
   `;
 }
 
@@ -1258,7 +1332,7 @@ function ideaCardHtml(i) {
       <div class="card-top">
         <div class="card-title-row">
           <button class="pin-btn ${i.pinned ? 'active' : ''}" data-pin="${i.id}" title="우선 작업으로 표시">★</button>
-          <h3 class="idea-title">${escapeHtml(i.title)}</h3>
+          <h3 class="idea-title">${i.priority ? escapeHtml(i.priority) + ' ' : ''}${escapeHtml(i.title)}</h3>
         </div>
         <div class="card-actions">
           <button class="icon-btn" data-edit="${i.id}">수정</button>
@@ -1269,6 +1343,7 @@ function ideaCardHtml(i) {
         <span class="tag stage-tag" style="background:${stageStyle.bg}; color:${stageStyle.text};">${escapeHtml(i.stage)}</span>
         ${sourceStyle ? `<span class="tag" style="background:${sourceStyle.bg}; color:${sourceStyle.text};">${escapeHtml(i.source)}</span>` : ''}
         ${i.template && i.template !== '미정' ? `<span class="tag" style="background:var(--muted-tint); color:var(--muted);">${escapeHtml(i.template)}</span>` : ''}
+        ${i.reduction ? `<span class="tag" style="background:var(--moss-tint); color:var(--moss-dark);">➜ ${escapeHtml(i.reduction)}</span>` : ''}
       </div>
       ${i.hook && i.hook.trim() ? `<div class="hook-line">"${escapeHtml(i.hook)}"</div>` : ''}
       ${i.memo && i.memo.trim() ? `<div class="idea-memo">${escapeHtml(i.memo)}</div>` : ''}
@@ -1282,7 +1357,7 @@ async function quickAddIdea() {
   const input = document.getElementById('quickInput');
   const title = input.value.trim();
   if (!title) { input.focus(); return; }
-  ideaList.push({ id: uid(), title, stage: '아이디어', source: '', template: '미정', hook: '', memo: '', pinned: false, createdAt: Date.now() });
+  ideaList.push({ id: uid(), title, stage: '아이디어', source: '', template: '미정', hook: '', memo: '', reduction: '', pinned: false, createdAt: Date.now() });
   input.value = '';
   await saveIdeaList();
   renderIdeas();
@@ -1298,7 +1373,7 @@ document.getElementById('bulkAddBtn').addEventListener('click', async () => {
   if (lines.length === 0) { textarea.focus(); return; }
 
   lines.forEach(title => {
-    ideaList.push({ id: uid(), title, stage: '아이디어', source: '', template: '미정', hook: '', memo: '', pinned: false, createdAt: Date.now() });
+    ideaList.push({ id: uid(), title, stage: '아이디어', source: '', template: '미정', hook: '', memo: '', reduction: '', pinned: false, createdAt: Date.now() });
   });
 
   textarea.value = '';
@@ -1317,6 +1392,7 @@ document.getElementById('copyIdeasBtn').addEventListener('click', async () => {
     let line = `• ${i.title} [${i.stage}]`;
     if (i.source) line += ` · 출처: ${i.source}`;
     if (i.template && i.template !== '미정') line += ` · ${i.template}`;
+    if (i.reduction) line += ` · 덜 하게 되는 것: ${i.reduction}`;
     if (i.hook) line += `\n  후킹 문구: "${i.hook}"`;
     if (i.memo) line += `\n  메모: ${i.memo}`;
     return line;
@@ -1353,8 +1429,12 @@ function openIdeaModal(id) {
       <div class="form-row"><label>진행 단계</label><select id="if-stage">${IDEA_STAGES.map(s => `<option value="${s}" ${idea.stage === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
       <div class="form-row"><label>소스 (발견 경로)</label><select id="if-source"><option value="" ${!idea.source ? 'selected' : ''}>미지정</option>${IDEA_SOURCES.map(s => `<option value="${s}" ${idea.source === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
       <div class="form-row"><label>적합 템플릿</label><select id="if-template">${IDEA_TEMPLATES.map(t => `<option value="${t}" ${idea.template === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="form-row"><label>우선순위</label><select id="if-priority"><option value="" ${!idea.priority ? 'selected' : ''}>미지정</option><option value="🔥" ${idea.priority === '🔥' ? 'selected' : ''}>🔥 급함</option><option value="🟢" ${idea.priority === '🟢' ? 'selected' : ''}>🟢 보통</option><option value="🟡" ${idea.priority === '🟡' ? 'selected' : ''}>🟡 여유</option><option value="❄️" ${idea.priority === '❄️' ? 'selected' : ''}>❄️ 시즌 대기</option></select></div>
+      <div class="form-row"><label>콘텐츠 축</label><input type="text" id="if-axis" value="${escapeHtml(idea.contentAxis || '')}" placeholder="예: 살리기 + 손실방어"></div>
+      <div class="form-row"><label>상태/비고</label><input type="text" id="if-status" value="${escapeHtml(idea.statusNote || '')}" placeholder="예: 기획중 / 자료나눔"></div>
+      <div class="form-row"><label>이걸 보고 뭘 덜 하게 되나?</label><input type="text" id="if-reduction" value="${escapeHtml(idea.reduction || '')}" placeholder="예: 덜 산다 / 덜 버린다 / 덜 닦는다 / 덜 찾는다 / 돈이 덜 샌다 / 덜 신경 쓴다"></div>
       <div class="form-row"><label>후킹 문구 초안</label><input type="text" id="if-hook" value="${escapeHtml(idea.hook)}" placeholder="예: 아, 이걸 왜 이제 알았을까요?"></div>
-      <div class="form-row"><label>메모</label><textarea id="if-memo" placeholder="구체적인 상황, 참고할 것, 성과 메모 등">${escapeHtml(idea.memo)}</textarea></div>
+      <div class="form-row"><label>핵심기획</label><textarea id="if-memo" placeholder="예: B급 세일 옷 → 뜯김 발견 → 와펜으로 살리기 → 자료 나눔">${escapeHtml(idea.memo)}</textarea></div>
       <div class="modal-actions"><button class="btn-secondary" id="ideaCancelBtn">취소</button><button class="btn-primary" id="ideaSaveBtn">저장</button></div>
     </div>
   `;
@@ -1378,6 +1458,10 @@ async function submitIdeaForm(overlay) {
       stage: overlay.querySelector('#if-stage').value,
       source: overlay.querySelector('#if-source').value,
       template: overlay.querySelector('#if-template').value,
+      priority: overlay.querySelector('#if-priority').value,
+      contentAxis: overlay.querySelector('#if-axis').value.trim(),
+      statusNote: overlay.querySelector('#if-status').value.trim(),
+      reduction: overlay.querySelector('#if-reduction').value.trim(),
       hook: overlay.querySelector('#if-hook').value.trim(),
       memo: overlay.querySelector('#if-memo').value.trim(),
     };
